@@ -1,6 +1,7 @@
 -- esp.lua — ESP / Wallhack (подсветка игроков)
 
-local Mortis = getgenv().Mortis or require("core")
+-- Используем уже инициализированный Mortis без Roblox require
+local Mortis = getgenv().Mortis or {}
 getgenv().Mortis = Mortis
 
 local Workspace = Mortis.Workspace
