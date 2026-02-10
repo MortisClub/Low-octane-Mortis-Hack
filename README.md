@@ -1,6 +1,30 @@
-## Mortis HACK v10.1
+<div align="center">
 
-Многофункциональный модульный скрипт для Roblox с удобным UI и аккуратной архитектурой.
+  <!-- БАННЕР / ЛОГО -->
+  <!-- ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЙ БАННЕР / ЛОГО -->
+  <img src="https://i.ibb.co/bRb9CXZC/sqg5xpd7.jpg" alt="Mortis Hack Banner" width="720">
+
+  <br><br>
+
+  <!-- БЕЙДЖИ -->
+  <img src="https://img.shields.io/badge/Roblox-Script-blueviolet?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Mortis-HACK%20v10.1-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/UI-Fluent%20Style-00bcd4?style=for-the-badge" />
+
+  <br><br>
+
+  <b>Mortis HACK v10.1</b>
+  <p>Многофункциональный модульный скрипт для Roblox с удобным UI и аккуратной архитектурой.</p>
+
+  <!-- ПРЕВЬЮ ИНТЕРФЕЙСА / ГЕЙМПЛЕЯ -->
+  <!-- Можешь заменить на свой скрин / гифку меню -->
+  <img src="https://i.ibb.co/xqsxg8Wk/ds274vpy.jpg" alt="Mortis Hack Preview" width="480">
+
+</div>
+
+---
+
+### Основные функции
 
 - **Aimbot**: плавное/агрессивное наведение, FOV‑круг, Magic Bullet, Anti‑Recoil, No Hand Shake  
 - **ESP / WH**: подсветка игроков по командам (headcloth / band / neutral)  
