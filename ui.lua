@@ -285,9 +285,260 @@ function M.initUI()
         end
     })
 
-    -- Остальные вкладки (Combat, Movement, Player, Visuals, Settings)
-    -- можно дословно перенести из HACK.lua, только функции брать из movement/aim/lighting.
-    -- Чтобы не раздувать код здесь, логика та же, что и в оригинале.
+    -- ===================== COMBAT TAB =====================
+    local CombatTab = Window:AddTab({ Title = "Combat", Icon = "target" })
+
+    CombatTab:AddParagraph({ Title = "⚔ Combat", Content = "Magic Bullet, Anti-Recoil, No Hand Shake" })
+
+    CombatTab:AddToggle("MagicBulletEnabled", {
+        Title = "Magic Bullet",
+        Description = "Перенаправлять выстрелы в ближайшую цель",
+        Default = Settings.MagicBullet_Enabled,
+        Callback = function(v) Settings.MagicBullet_Enabled = v end
+    })
+
+    CombatTab:AddToggle("MagicBulletFOVCheck", {
+        Title = "Учитывать FOV",
+        Description = "Цели только в радиусе прицела",
+        Default = Settings.MagicBullet_FOVCheck,
+        Callback = function(v) Settings.MagicBullet_FOVCheck = v end
+    })
+
+    CombatTab:AddDropdown("MagicBulletTarget", {
+        Title = "Цель Magic Bullet",
+        Values = {"Head", "Torso", "Auto"},
+        Default = Settings.MagicBullet_TargetPart or "Head",
+        Callback = function(v) Settings.MagicBullet_TargetPart = v end
+    })
+
+    CombatTab:AddParagraph({ Title = "📉 Anti-Recoil / No Hand Shake", Content = "" })
+
+    CombatTab:AddToggle("AntiRecoilEnabled", {
+        Title = "Anti-Recoil",
+        Description = "Компенсация вертикальной отдачи",
+        Default = Settings.AntiRecoil_Enabled,
+        Callback = function(v) Settings.AntiRecoil_Enabled = v end
+    })
+
+    CombatTab:AddSlider("AntiRecoilStrength", {
+        Title = "Сила Anti-Recoil",
+        Min = 0,
+        Max = 200,
+        Default = Settings.AntiRecoil_Strength,
+        Rounding = 0,
+        Callback = function(v) Settings.AntiRecoil_Strength = v end
+    })
+
+    CombatTab:AddToggle("NoHandShakeEnabled", {
+        Title = "No Hand Shake",
+        Description = "Стабилизировать прицел при микродвижениях",
+        Default = Settings.NoHandShake_Enabled,
+        Callback = function(v) Settings.NoHandShake_Enabled = v end
+    })
+
+    CombatTab:AddSlider("NoHandShakeStrength", {
+        Title = "Сила стабилизации",
+        Min = 0,
+        Max = 200,
+        Default = Settings.NoHandShake_Strength,
+        Rounding = 0,
+        Callback = function(v) Settings.NoHandShake_Strength = v end
+    })
+
+    -- ===================== MOVEMENT TAB =====================
+    local MovementTab = Window:AddTab({ Title = "Movement", Icon = "zap" })
+
+    MovementTab:AddParagraph({ Title = "🏃 Движение", Content = "Fly, Noclip, Speed, Jump" })
+
+    MovementTab:AddToggle("FlyEnabled", {
+        Title = "Fly",
+        Description = "Полёт на WASD",
+        Default = Settings.Fly_Enabled,
+        Callback = function(v)
+            Settings.Fly_Enabled = v
+            if v then
+                movement.startFly()
+            else
+                movement.stopFly()
+            end
+        end
+    })
+
+    MovementTab:AddSlider("FlySpeed", {
+        Title = "Fly Speed",
+        Min = 10,
+        Max = 200,
+        Default = Settings.Fly_Speed,
+        Rounding = 0,
+        Callback = function(v) Settings.Fly_Speed = v end
+    })
+
+    MovementTab:AddToggle("NoclipEnabled", {
+        Title = "Noclip",
+        Description = "Проходить сквозь стены",
+        Default = Settings.Noclip_Enabled,
+        Callback = function(v) Settings.Noclip_Enabled = v end
+    })
+
+    MovementTab:AddToggle("SpeedEnabled", {
+        Title = "Speed Hack",
+        Description = "Увеличение скорости бега",
+        Default = Settings.Speed_Enabled,
+        Callback = function(v) Settings.Speed_Enabled = v end
+    })
+
+    MovementTab:AddSlider("SpeedValue", {
+        Title = "WalkSpeed",
+        Min = 16,
+        Max = 200,
+        Default = Settings.Speed_Value,
+        Rounding = 0,
+        Callback = function(v) Settings.Speed_Value = v end
+    })
+
+    MovementTab:AddToggle("JumpPowerEnabled", {
+        Title = "Jump Power",
+        Description = "Увеличение высоты прыжка",
+        Default = Settings.JumpPower_Enabled,
+        Callback = function(v) Settings.JumpPower_Enabled = v end
+    })
+
+    MovementTab:AddSlider("JumpPowerValue", {
+        Title = "Jump Power",
+        Min = 50,
+        Max = 300,
+        Default = Settings.JumpPower_Value,
+        Rounding = 0,
+        Callback = function(v) Settings.JumpPower_Value = v end
+    })
+
+    MovementTab:AddToggle("InfiniteJumpEnabled", {
+        Title = "Infinite Jump",
+        Description = "Прыжок в воздухе (Space)",
+        Default = Settings.InfiniteJump_Enabled,
+        Callback = function(v) Settings.InfiniteJump_Enabled = v end
+    })
+
+    MovementTab:AddParagraph({ Title = "📷 Камера и прочее", Content = "" })
+
+    MovementTab:AddToggle("FreeCamEnabled", {
+        Title = "FreeCam",
+        Description = "Свободная камера",
+        Default = Settings.FreeCam_Enabled,
+        Callback = function(v)
+            Settings.FreeCam_Enabled = v
+            if v then
+                movement.startFreeCam()
+            else
+                movement.stopFreeCam()
+            end
+        end
+    })
+
+    MovementTab:AddSlider("FreeCamSpeed", {
+        Title = "Скорость FreeCam",
+        Min = 0.5,
+        Max = 10,
+        Default = Settings.FreeCam_Speed,
+        Rounding = 1,
+        Callback = function(v) Settings.FreeCam_Speed = v end
+    })
+
+    MovementTab:AddToggle("ClickTPEnabled", {
+        Title = "Teleport (E / ClickTP)",
+        Description = "Телепорт к курсору по E",
+        Default = Settings.ClickTP_Enabled,
+        Callback = function(v) Settings.ClickTP_Enabled = v end
+    })
+
+    MovementTab:AddToggle("SpinEnabled", {
+        Title = "Spin",
+        Description = "Вращение персонажа вокруг оси",
+        Default = Settings.Spin_Enabled,
+        Callback = function(v) Settings.Spin_Enabled = v end
+    })
+
+    MovementTab:AddSlider("SpinSpeed", {
+        Title = "Скорость вращения",
+        Min = 1,
+        Max = 50,
+        Default = Settings.Spin_Speed,
+        Rounding = 0,
+        Callback = function(v) Settings.Spin_Speed = v end
+    })
+
+    -- ===================== PLAYER TAB =====================
+    local PlayerTab = Window:AddTab({ Title = "Player", Icon = "user" })
+
+    PlayerTab:AddParagraph({ Title = "🧍 Игрок", Content = "GodMode, Invis, Hitbox" })
+
+    PlayerTab:AddToggle("GodModeEnabled", {
+        Title = "GodMode",
+        Description = "Авто-хил до MaxHealth",
+        Default = Settings.GodMode_Enabled,
+        Callback = function(v) Settings.GodMode_Enabled = v end
+    })
+
+    PlayerTab:AddToggle("InvisibilityEnabled", {
+        Title = "Invisibility",
+        Description = "Сделать модель прозрачной",
+        Default = Settings.Invisibility_Enabled,
+        Callback = function(v)
+            Settings.Invisibility_Enabled = v
+            movement.applyInvisibility()
+        end
+    })
+
+    PlayerTab:AddToggle("BigHeadEnabled", {
+        Title = "BigHead / Hitbox",
+        Description = "Увеличить хитбоксы голов врагов",
+        Default = Settings.BigHead_Enabled,
+        Callback = function(v) Settings.BigHead_Enabled = v end
+    })
+
+    PlayerTab:AddSlider("HitboxSize", {
+        Title = "Размер хитбокса",
+        Min = 5,
+        Max = 30,
+        Default = Settings.HitboxSize,
+        Rounding = 0,
+        Callback = function(v) Settings.HitboxSize = v end
+    })
+
+    -- ===================== VISUALS TAB =====================
+    local VisualsTab = Window:AddTab({ Title = "Visuals", Icon = "sun" })
+
+    VisualsTab:AddParagraph({ Title = "🌇 Освещение", Content = "Fullbright, Day, No Fog" })
+
+    VisualsTab:AddToggle("FullbrightEnabled", {
+        Title = "Fullbright",
+        Description = "Максимально яркая карта",
+        Default = Settings.Fullbright_Enabled,
+        Callback = function(v)
+            Settings.Fullbright_Enabled = v
+            lighting.applyFullbright()
+        end
+    })
+
+    VisualsTab:AddToggle("AlwaysDayEnabled", {
+        Title = "Always Day",
+        Description = "Всегда день (14:00)",
+        Default = Settings.AlwaysDay_Enabled,
+        Callback = function(v)
+            Settings.AlwaysDay_Enabled = v
+            lighting.applyAlwaysDay()
+        end
+    })
+
+    VisualsTab:AddToggle("RemoveFogEnabled", {
+        Title = "No Fog",
+        Description = "Убрать туман",
+        Default = Settings.RemoveFog_Enabled,
+        Callback = function(v)
+            Settings.RemoveFog_Enabled = v
+            lighting.applyRemoveFog()
+        end
+    })
 
     -- Настройки сохранений
     SaveManager:SetLibrary(Fluent)
