@@ -8,14 +8,14 @@
 
   <!-- БЕЙДЖИ -->
   <img src="https://img.shields.io/badge/Roblox-Script-blueviolet?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Mortis-v11.1-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Mortis-v11.2-red?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Xeno-Fix-black?style=for-the-badge" />
   <img src="https://img.shields.io/badge/UI-Rayfield-00bcd4?style=for-the-badge" />
 
   <br><br>
 
-  <b>Mortis v11.1 — Config Update</b>
-  <p>Обновлённая версия без хуков с системой конфигов и Rayfield‑GUI.</p>
+  <b>Mortis v11.2 — Config/Monolith</b>
+  <p>Версия без хуков с системой конфигов и осознанным монолитным `runtime.lua` под Xeno.</p>
 
   <!-- ПРЕВЬЮ ИНТЕРФЕЙСА / ГЕЙМПЛЕЯ -->
   <!-- Можешь заменить на свой скрин / гифку меню -->
@@ -34,8 +34,9 @@
 **Удалено в v10.x** (по совместимости с новым Xeno):
 - **Magic Bullet / hookmetamethod** (ломает оружие в новой версии Xeno)
 
-Все функции разнесены по модулям, а единая точка входа — `main.lua`  
-([посмотреть на GitHub](https://github.com/MortisClub/Low-octane-Mortis-/blob/main/main.lua)).
+Единая точка входа — `main.lua`, который загружает монолитный `runtime.lua`  
+([посмотреть на GitHub](https://github.com/MortisClub/Low-octane-Mortis-/blob/main/main.lua)).  
+Монолитный формат выбран специально: так Xeno гарантированно загружает весь код без `require` и дополнительных модулей.
 
 ---
 
@@ -57,7 +58,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/MortisClub/Low-octane
 ## Как это работает
 
 - **`main.lua`** — загрузчик.
-- **`runtime.lua`** — основной скрипт v11.1 (ESP + Aimbot + Fullbright + Configs) и Rayfield‑GUI.
+- **`runtime.lua`** — основной скрипт v11.2 (ESP + Aimbot + Fullbright + Configs) и Rayfield‑GUI.
 - **Без хуков**: в v10.2 нет `hookmetamethod`, чтобы не ломать оружие в новом Xeno.
 
 ---
@@ -68,7 +69,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/MortisClub/Low-octane
   Точка входа. Подгружает `runtime.lua` по HTTP (`game:HttpGet`) и выполняет.
 
 - **`runtime.lua`**  
-  Основной скрипт v11.1: ESP + Aimbot + Fullbright + Rayfield‑GUI + система конфигов (папка `MortisHack/`).
+  Основной скрипт v11.2: ESP + Aimbot + Fullbright + Rayfield‑GUI + система конфигов (папка `MortisHack/`).
 
 ---
 
@@ -110,11 +111,17 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/MortisClub/Low-octane
 
 ## Changelog
 
+- **v11.2 — Config / Monolith**
+  - **Решение по архитектуре**: `runtime.lua` оставлен монолитным файлом, а не разбит на несколько модулей (`core.lua`, `aim.lua`, `esp.lua` и т.д.).  
+    - **Причина**: Xeno стабильнее и предсказуемее выполняет один большой скрипт, загруженный через `loadstring(game:HttpGet(...main.lua))()`, чем связку из нескольких `require`/доп. файлов.  
+    - **Эффект**: меньше шансов, что у пользователя что‑то не догрузится (битые пути, кеш, ограничения на `require`) — всё, что нужно, всегда приезжает одним запросом.  
+
 - **v11.1 — Config System**
   - **Добавлено**: вкладка **Configs** в Rayfield‑GUI.  
   - **Добавлено**: сохранение/загрузка конфигов в папку `MortisHack/` в формате `*.json` (например, `default.json`, `legit.json`, `rage.json`, `tournament.json`).  
   - **Добавлено**: авто‑обновление всех слайдеров/тогглов при загрузке конфига и опция авто‑загрузки `default` при старте.  
   - **Сохраняется**: все ключевые параметры из `Settings` (ESP‑цвет/прозрачность, все Aimbot‑настройки, Fullbright и т.п.).  
+   - **Дизайн‑решение**: `runtime.lua` оставлен монолитным файлом вместо разбиения на несколько модулей (`core.lua`, `aim.lua`, `esp.lua` и т.д.), чтобы Xeno загружал весь код одной `loadstring(game:HttpGet(...main.lua))()` без `require` и проблем с путями.
 
 - **v10.2 — Xeno Fix**
   - **Удалено**: Magic Bullet и любые хуки через `hookmetamethod`  
