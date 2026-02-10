@@ -1,6 +1,7 @@
 -- movement.lua — полёт, скорость, прыжки, спин, инвиз, бигхед, фрикам
 
-local Mortis = getgenv().Mortis or require("core")
+-- Берём глобальный Mortis, созданный core.lua, без require("core")
+local Mortis = getgenv().Mortis or {}
 getgenv().Mortis = Mortis
 
 local Settings = Mortis.Settings
