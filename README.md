@@ -18,7 +18,7 @@
 
   <!-- ПРЕВЬЮ ИНТЕРФЕЙСА / ГЕЙМПЛЕЯ -->
   <!-- Можешь заменить на свой скрин / гифку меню -->
-  <img src="https://i.ibb.co/xqsxg8Wk/ds274vpy.jpg" alt="Mortis Hack Preview" width="480">
+  <img src="https://i.ibb.co/JjvKcCY3/fmycru3m.jpg" alt="Mortis Hack Preview" width="480">
 
 </div>
 
