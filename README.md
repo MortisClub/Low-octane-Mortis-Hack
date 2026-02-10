@@ -2,7 +2,7 @@
 
   <!-- БАННЕР / ЛОГО -->
   <!-- ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЙ БАННЕР / ЛОГО -->
-  <img src="https://i.ibb.co/bRb9CXZC/sqg5xpd7.jpg" alt="Mortis Hack Banner" width="720">
+  <img src="https://i.ibb.co/vx5yR1Kd/uvsoprkl.png" alt="Mortis Hack Banner" width="720">
 
   <br><br>
 
@@ -22,6 +22,24 @@
   <img src="https://i.ibb.co/JjvKcCY3/fmycru3m.jpg" alt="Mortis Hack Preview" width="480">
 
 </div>
+
+---
+
+### Галерея
+
+- **Главное меню (ESP)**  
+  <img src="https://i.ibb.co/p6QpzbRQ/kg0cetni.jpg" alt="Mortis ESP Tab" width="480">
+
+- **Вкладка Aimbot**  
+  <img src="https://i.ibb.co/CpsWZKDD/mee4kqj1.jpg" alt="Mortis Aimbot Tab" width="480">
+
+- **Вкладка Configs (сохранение пресетов)**  
+  <img src="https://i.ibb.co/HTQDqTTf/0q3kjg7s.jpg" alt="Mortis Configs Tab" width="480">
+
+- **Пример в игре (ESP + FOV)**  
+  <img src="https://i.ibb.co/Kp5LkHbH/owshhvcz.jpg" alt="Mortis Ingame ESP + FOV" width="480">
+
+> Заменишь ссылки `your-*-screenshot.png` на свои реальные скриншоты с Imgur/ibb.co.
 
 ---
 
