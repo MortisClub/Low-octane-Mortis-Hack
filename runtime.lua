@@ -506,7 +506,7 @@ end
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Mortis v11.1",
+    Name = "Mortis v11.2",
     LoadingTitle = "Mortis HACK",
     LoadingSubtitle = "Loading...",
     ConfigurationSaving = { Enabled = false },
