@@ -39,23 +39,12 @@
 
 ## Быстрый старт
 
-1. **Залей файлы в свой репозиторий GitHub**
-   - `main.lua`
-   - `core.lua`
-   - `lighting.lua`
-   - `movement.lua`
-   - `esp.lua`
-   - `aim.lua`
-   - `ui.lua`
-   - `runtime.lua`
 
-2. **получи raw‑ссылку** на `main.lua`, например:  
-   `https://raw.githubusercontent.com/<USER>/<REPO>/main/main.lua`
 
-3. **запусти в Xeno / SynX / другом Lua‑экзекьюторе**:
+ **запусти в Xeno / SynX / другом Lua‑экзекьюторе**:
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/<USER>/<REPO>/main/main.lua"))()
+loadstring(game:HttpGet("https://github.com/MortisClub/Low-octane-Mortis-/blob/main/main.lua"))()
 ```
 
 После этого `main.lua` автоматически:
@@ -68,18 +57,13 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/<USER>/<REPO>/main/ma
 
 ## Настройка `BASE_URL` в `main.lua`
 
-В начале `main.lua` есть константа:
+В этом репозитории `BASE_URL` уже настроен на твой GitHub:
 
 ```lua
-local BASE_URL = "https://example.com/mortis/"
+local BASE_URL = "https://raw.githubusercontent.com/MortisClub/Low-octane-Mortis-/main/"
 ```
 
-- Замени её на путь к папке, где лежат **все остальные .lua файлы**.  
-- Если файлы лежат в корне репозитория, подойдёт:
-
-```lua
-local BASE_URL = "https://raw.githubusercontent.com/<USER>/<REPO>/main/"
-```
+Если форкнешь проект под себя — заменить нужно только `MortisClub/Low-octane-Mortis-` на свой `<USER>/<REPO>`.
 
 Список модулей уже заранее настроен под текущую структуру:
 
