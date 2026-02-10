@@ -8,14 +8,14 @@
 
   <!-- БЕЙДЖИ -->
   <img src="https://img.shields.io/badge/Roblox-Script-blueviolet?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Mortis-v10.2-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Mortis-v11.1-red?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Xeno-Fix-black?style=for-the-badge" />
   <img src="https://img.shields.io/badge/UI-Rayfield-00bcd4?style=for-the-badge" />
 
   <br><br>
 
-  <b>Mortis v10.2 — Xeno Fix</b>
-  <p>Обновлённая версия без хуков: оружие/прицел не ломается в новом Xeno.</p>
+  <b>Mortis v11.1 — Config Update</b>
+  <p>Обновлённая версия без хуков с системой конфигов и Rayfield‑GUI.</p>
 
   <!-- ПРЕВЬЮ ИНТЕРФЕЙСА / ГЕЙМПЛЕЯ -->
   <!-- Можешь заменить на свой скрин / гифку меню -->
@@ -31,7 +31,7 @@
 - **ESP / WH**: подсветка игроков по командам (headcloth / band / neutral)  
 - **Visuals**: Fullbright  
 
-**Удалено в v10.2** (по совместимости с новым Xeno):
+**Удалено в v10.x** (по совместимости с новым Xeno):
 - **Magic Bullet / hookmetamethod** (ломает оружие в новой версии Xeno)
 
 Все функции разнесены по модулям, а единая точка входа — `main.lua`  
@@ -57,7 +57,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/MortisClub/Low-octane
 ## Как это работает
 
 - **`main.lua`** — загрузчик.
-- **`runtime.lua`** — основной скрипт v10.2 (ESP + Aimbot + Fullbright) и Rayfield‑GUI.
+- **`runtime.lua`** — основной скрипт v11.1 (ESP + Aimbot + Fullbright + Configs) и Rayfield‑GUI.
 - **Без хуков**: в v10.2 нет `hookmetamethod`, чтобы не ломать оружие в новом Xeno.
 
 ---
@@ -68,7 +68,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/MortisClub/Low-octane
   Точка входа. Подгружает `runtime.lua` по HTTP (`game:HttpGet`) и выполняет.
 
 - **`runtime.lua`**  
-  Основной скрипт v10.2: ESP + Aimbot + Fullbright + Rayfield‑GUI (без хуков).
+  Основной скрипт v11.1: ESP + Aimbot + Fullbright + Rayfield‑GUI + система конфигов (папка `MortisHack/`).
 
 ---
 
@@ -109,6 +109,12 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/MortisClub/Low-octane
 ---
 
 ## Changelog
+
+- **v11.1 — Config System**
+  - **Добавлено**: вкладка **Configs** в Rayfield‑GUI.  
+  - **Добавлено**: сохранение/загрузка конфигов в папку `MortisHack/` в формате `*.json` (например, `default.json`, `legit.json`, `rage.json`, `tournament.json`).  
+  - **Добавлено**: авто‑обновление всех слайдеров/тогглов при загрузке конфига и опция авто‑загрузки `default` при старте.  
+  - **Сохраняется**: все ключевые параметры из `Settings` (ESP‑цвет/прозрачность, все Aimbot‑настройки, Fullbright и т.п.).  
 
 - **v10.2 — Xeno Fix**
   - **Удалено**: Magic Bullet и любые хуки через `hookmetamethod`  
