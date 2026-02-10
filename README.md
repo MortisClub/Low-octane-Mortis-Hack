@@ -1,7 +1,5 @@
 <div align="center">
 
-  <!-- БАННЕР / ЛОГО -->
-  <!-- ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЙ БАННЕР / ЛОГО -->
   <img src="https://i.ibb.co/vx5yR1Kd/uvsoprkl.png" alt="Mortis Hack Banner" width="720">
 
   <br><br>
@@ -15,8 +13,6 @@
   <b>Mortis v11.2 — Config/Monolith</b>
   <p>Версия без хуков с системой конфигов и осознанным монолитным `runtime.lua` под Xeno.</p>
 
-  <!-- ПРЕВЬЮ ИНТЕРФЕЙСА / ГЕЙМПЛЕЯ -->
-  <!-- Можешь заменить на свой скрин / гифку меню -->
   <img src="https://i.ibb.co/JjvKcCY3/fmycru3m.jpg" alt="Mortis Hack Preview" width="480">
 
 </div>
@@ -36,8 +32,6 @@
 
 - **Пример в игре (ESP + FOV)**  
   <img src="https://i.ibb.co/Kp5LkHbH/owshhvcz.jpg" alt="Mortis Ingame ESP + FOV" width="480">
-
-> Заменишь ссылки `your-*-screenshot.png` на свои реальные скриншоты с Imgur/ibb.co.
 
 ---
 
