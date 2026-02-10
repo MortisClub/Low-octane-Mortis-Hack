@@ -3,11 +3,12 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ============================================
--- ЖДЁМ ЗАГРУЗКУ ИГРЫ
+-- ЖДЁМ ЗАГРУЗКУ
 -- ============================================
 task.wait(5)
 
@@ -41,18 +42,20 @@ local function findMyModel()
 end
 
 -- ============================================
--- SETTINGS (ТОЛЬКО НУЖНОЕ)
+-- SETTINGS
 -- ============================================
 local Settings = {
     ESP_Enabled = false,
-    ESP_Color = Color3.fromRGB(255, 50, 50),
+    ESP_Color_R = 255,
+    ESP_Color_G = 50,
+    ESP_Color_B = 50,
     ESP_Transparency = 0.6,
 
     Aimbot_Enabled = false,
     Aimbot_Smoothing = 4,
     Aimbot_FOV = 120,
     Aimbot_DeadZone = 1,
-    Aimbot_Prediction = 0.08,
+    Aimbot_Prediction = 8,
     Aimbot_ResponseCurve = 1.2,
     Aimbot_MaxSpeed = 40,
     Aimbot_MinSpeed = 0.5,
@@ -63,7 +66,12 @@ local Settings = {
     Aimbot_AlwaysOn = false,
 
     Fullbright_Enabled = false,
+}
 
+-- Для работы ESP
+local ESP_Color = Color3.fromRGB(255, 50, 50)
+
+local RuntimeState = {
     FOVCircle = nil,
     WatchedModels = {},
     CurrentTarget = nil,
@@ -71,7 +79,84 @@ local Settings = {
 }
 
 -- ============================================
--- ПОИСК ГОЛОВЫ / ЦЕЛИ
+-- CONFIG SYSTEM
+-- ============================================
+local CONFIG_FOLDER = "MortisHack"
+local CONFIG_EXT = ".json"
+local CurrentConfigName = "default"
+
+local function ensureFolder()
+    pcall(function()
+        if not isfolder(CONFIG_FOLDER) then
+            makefolder(CONFIG_FOLDER)
+        end
+    end)
+end
+
+local function getConfigPath(name)
+    return CONFIG_FOLDER .. "/" .. name .. CONFIG_EXT
+end
+
+local function getConfigList()
+    ensureFolder()
+    local list = {}
+    pcall(function()
+        local files = listfiles(CONFIG_FOLDER)
+        for _, f in pairs(files) do
+            local name = f:match("([^/\\]+)%" .. CONFIG_EXT .. "$")
+            if name then
+                table.insert(list, name)
+            end
+        end
+    end)
+    if #list == 0 then
+        table.insert(list, "default")
+    end
+    return list
+end
+
+local function saveConfig(name)
+    ensureFolder()
+    local data = {}
+    for k, v in pairs(Settings) do
+        data[k] = v
+    end
+    pcall(function()
+        writefile(getConfigPath(name), HttpService:JSONEncode(data))
+    end)
+end
+
+local function loadConfig(name)
+    local path = getConfigPath(name)
+    local ok, content = pcall(function()
+        return readfile(path)
+    end)
+    if not ok or not content then return false end
+    local ok2, data = pcall(function()
+        return HttpService:JSONDecode(content)
+    end)
+    if not ok2 or type(data) ~= "table" then return false end
+    for k, v in pairs(data) do
+        if Settings[k] ~= nil then
+            Settings[k] = v
+        end
+    end
+    ESP_Color = Color3.fromRGB(
+        Settings.ESP_Color_R or 255,
+        Settings.ESP_Color_G or 50,
+        Settings.ESP_Color_B or 50
+    )
+    return true
+end
+
+local function deleteConfig(name)
+    pcall(function()
+        delfile(getConfigPath(name))
+    end)
+end
+
+-- ============================================
+-- ПОИСК ЦЕЛЕЙ
 -- ============================================
 local function findCorrectHead(model)
     local charC = model:FindFirstChild("Character_C")
@@ -142,7 +227,7 @@ local function isModelAlive(model)
 end
 
 -- ============================================
--- TEAM COLORS
+-- TEAMS
 -- ============================================
 local teamCache = {}
 local teamCacheTick = {}
@@ -239,8 +324,8 @@ local function refreshHighlight(model)
         h.FillColor = Color3.fromRGB(0, 255, 0)
         h.OutlineColor = Color3.fromRGB(0, 255, 0)
     else
-        h.FillColor = Settings.ESP_Color
-        h.OutlineColor = Settings.ESP_Color
+        h.FillColor = ESP_Color
+        h.OutlineColor = ESP_Color
     end
     h.FillTransparency = Settings.ESP_Transparency
     h.Enabled = true
@@ -248,11 +333,11 @@ end
 
 local function watchModel(model)
     if not model then return end
-    if Settings.WatchedModels[model] then
+    if RuntimeState.WatchedModels[model] then
         refreshHighlight(model)
         return
     end
-    Settings.WatchedModels[model] = true
+    RuntimeState.WatchedModels[model] = true
     refreshHighlight(model)
 
     local c1 = model.DescendantAdded:Connect(function(d)
@@ -272,7 +357,7 @@ local function watchModel(model)
     local c3
     c3 = model.AncestryChanged:Connect(function(_, p)
         if not p then
-            Settings.WatchedModels[model] = nil
+            RuntimeState.WatchedModels[model] = nil
             teamCache[model] = nil
             teamCacheTick[model] = nil
             aliveCache[model] = nil
@@ -323,8 +408,8 @@ local stickyTargetModel = nil
 
 local function createFOVCircle()
     pcall(function()
-        if Settings.FOVCircle then
-            pcall(function() Settings.FOVCircle:Remove() end)
+        if RuntimeState.FOVCircle then
+            pcall(function() RuntimeState.FOVCircle:Remove() end)
         end
         local c = Drawing.new("Circle")
         c.Thickness = 2
@@ -334,7 +419,7 @@ local function createFOVCircle()
         c.Transparency = 0.7
         c.Visible = false
         c.Filled = false
-        Settings.FOVCircle = c
+        RuntimeState.FOVCircle = c
     end)
 end
 
@@ -382,7 +467,7 @@ local function aimAt(targetPart)
     if not targetPart or not targetPart.Parent then return end
     local vel = Vector3.zero
     pcall(function() vel = targetPart.AssemblyLinearVelocity or Vector3.zero end)
-    local predicted = targetPart.Position + vel * Settings.Aimbot_Prediction
+    local predicted = targetPart.Position + vel * (Settings.Aimbot_Prediction / 100)
     if predicted ~= predicted then predicted = targetPart.Position end
 
     local sp, onScreen = Camera:WorldToViewportPoint(predicted)
@@ -421,7 +506,7 @@ end
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Mortis v10.2 — Xeno Fix",
+    Name = "Mortis v11.1",
     LoadingTitle = "Mortis HACK",
     LoadingSubtitle = "Loading...",
     ConfigurationSaving = { Enabled = false },
@@ -429,33 +514,41 @@ local Window = Rayfield:CreateWindow({
     KeySystem = false
 })
 
--- ═══ ESP ═══
+-- ═══════════════════════════════
+-- ESP TAB
+-- ═══════════════════════════════
 local ESPTab = Window:CreateTab("ESP", 4483362458)
 ESPTab:CreateSection("ESP Settings")
 
-ESPTab:CreateToggle({
+local ESPToggle = ESPTab:CreateToggle({
     Name = "Enable ESP",
     CurrentValue = false,
+    Flag = "espToggle",
     Callback = function(v)
         Settings.ESP_Enabled = v
         updateESP()
     end
 })
 
-ESPTab:CreateColorPicker({
+local ESPColorPicker = ESPTab:CreateColorPicker({
     Name = "Neutral Color",
-    Color = Settings.ESP_Color,
+    Color = ESP_Color,
+    Flag = "espColor",
     Callback = function(v)
-        Settings.ESP_Color = v
+        ESP_Color = v
+        Settings.ESP_Color_R = math.floor(v.R * 255)
+        Settings.ESP_Color_G = math.floor(v.G * 255)
+        Settings.ESP_Color_B = math.floor(v.B * 255)
         updateESP()
     end
 })
 
-ESPTab:CreateSlider({
+local ESPSlider = ESPTab:CreateSlider({
     Name = "Fill Transparency",
     Range = {0, 1},
     Increment = 0.1,
-    CurrentValue = Settings.ESP_Transparency,
+    CurrentValue = 0.6,
+    Flag = "espTransp",
     Callback = function(v)
         Settings.ESP_Transparency = v
         updateESP()
@@ -463,63 +556,65 @@ ESPTab:CreateSlider({
 })
 
 ESPTab:CreateButton({
-    Name = "Rescan Players",
+    Name = "🔄 Rescan Players",
     Callback = function()
-        Settings.WatchedModels = {}
+        RuntimeState.WatchedModels = {}
         teamCache = {}
         teamCacheTick = {}
         aliveCache = {}
         findMyModel()
         local c = updateESP()
-        Rayfield:Notify({
-            Title = "ESP",
-            Content = c .. " players found",
-            Duration = 3
-        })
+        Rayfield:Notify({ Title = "ESP", Content = c .. " players", Duration = 3 })
     end
 })
 
 ESPTab:CreateLabel("🔴 Red = Headcloth | 🟢 Green = Band")
 
--- ═══ AIMBOT ═══
+-- ═══════════════════════════════
+-- AIMBOT TAB
+-- ═══════════════════════════════
 local AimTab = Window:CreateTab("Aimbot", 4483362458)
 AimTab:CreateSection("Activation")
 
-AimTab:CreateToggle({
+local AimToggle = AimTab:CreateToggle({
     Name = "Enable Aimbot",
     CurrentValue = false,
+    Flag = "aimToggle",
     Callback = function(v)
         Settings.Aimbot_Enabled = v
         pcall(function()
-            if Settings.FOVCircle then
-                Settings.FOVCircle.Visible = v
+            if RuntimeState.FOVCircle then
+                RuntimeState.FOVCircle.Visible = v
             end
         end)
     end
 })
 
-AimTab:CreateDropdown({
+local AimKeyDropdown = AimTab:CreateDropdown({
     Name = "Aim Key",
     Options = {"RMB", "LMB", "Shift", "Alt", "Ctrl", "Q", "X", "C", "CapsLock", "Always On"},
     CurrentOption = {"RMB"},
+    Flag = "aimKey",
     Callback = function(o)
         Settings.Aimbot_KeyMode = o[1]
         Settings.Aimbot_AlwaysOn = (o[1] == "Always On")
     end
 })
 
-AimTab:CreateDropdown({
+local AimPartDropdown = AimTab:CreateDropdown({
     Name = "Target Part",
     Options = {"Head", "Auto", "Torso"},
     CurrentOption = {"Head"},
+    Flag = "aimPart",
     Callback = function(o)
         Settings.Aimbot_TargetPart = o[1]
     end
 })
 
-AimTab:CreateToggle({
+local StickyToggle = AimTab:CreateToggle({
     Name = "Sticky Target",
     CurrentValue = true,
+    Flag = "aimSticky",
     Callback = function(v)
         Settings.Aimbot_StickyTarget = v
     end
@@ -527,94 +622,102 @@ AimTab:CreateToggle({
 
 AimTab:CreateSection("Main Settings")
 
-AimTab:CreateSlider({
+local SmoothSlider = AimTab:CreateSlider({
     Name = "Smoothing (1=instant 15=smooth)",
     Range = {1, 15},
     Increment = 0.5,
     CurrentValue = 4,
+    Flag = "aimSmooth",
     Callback = function(v)
         Settings.Aimbot_Smoothing = v
     end
 })
 
-AimTab:CreateSlider({
+local FOVSlider = AimTab:CreateSlider({
     Name = "FOV Radius",
     Range = {30, 500},
     Increment = 5,
     Suffix = "px",
     CurrentValue = 120,
+    Flag = "aimFOV",
     Callback = function(v)
         Settings.Aimbot_FOV = v
         pcall(function()
-            if Settings.FOVCircle then
-                Settings.FOVCircle.Radius = v
+            if RuntimeState.FOVCircle then
+                RuntimeState.FOVCircle.Radius = v
             end
         end)
     end
 })
 
-AimTab:CreateSlider({
+local DeadSlider = AimTab:CreateSlider({
     Name = "Dead Zone",
     Range = {0.5, 15},
     Increment = 0.5,
     Suffix = "px",
     CurrentValue = 1,
+    Flag = "aimDead",
     Callback = function(v)
         Settings.Aimbot_DeadZone = v
     end
 })
 
-AimTab:CreateSlider({
+local PredSlider = AimTab:CreateSlider({
     Name = "Prediction",
     Range = {0, 50},
     Increment = 1,
     Suffix = "%",
     CurrentValue = 8,
+    Flag = "aimPred",
     Callback = function(v)
-        Settings.Aimbot_Prediction = v / 100
+        Settings.Aimbot_Prediction = v
     end
 })
 
 AimTab:CreateSection("Fine Tuning")
 
-AimTab:CreateSlider({
+local CurveSlider = AimTab:CreateSlider({
     Name = "Response Curve",
     Range = {0.3, 3},
     Increment = 0.1,
     CurrentValue = 1.2,
+    Flag = "aimCurve",
     Callback = function(v)
         Settings.Aimbot_ResponseCurve = v
     end
 })
 
-AimTab:CreateSlider({
+local MaxSpeedSlider = AimTab:CreateSlider({
     Name = "Max Speed",
     Range = {5, 100},
     Increment = 5,
     Suffix = "px",
     CurrentValue = 40,
+    Flag = "aimMaxSpd",
     Callback = function(v)
         Settings.Aimbot_MaxSpeed = v
     end
 })
 
-AimTab:CreateSlider({
+local MinSpeedSlider = AimTab:CreateSlider({
     Name = "Min Speed",
     Range = {0.1, 3},
     Increment = 0.1,
     Suffix = "px",
     CurrentValue = 0.5,
+    Flag = "aimMinSpd",
     Callback = function(v)
         Settings.Aimbot_MinSpeed = v
     end
 })
 
-AimTab:CreateSlider({
+local NearSlider = AimTab:CreateSlider({
     Name = "Near Slowdown",
     Range = {5, 80},
     Increment = 5,
     Suffix = "px",
     CurrentValue = 15,
+    Flag = "aimNear",
     Callback = function(v)
         Settings.Aimbot_NearSlowdown = v
     end
@@ -622,89 +725,253 @@ AimTab:CreateSlider({
 
 AimTab:CreateSection("Presets")
 
+local function applyPreset(name, s, f, d, p, rc, mx, mn, ns)
+    Settings.Aimbot_Smoothing = s
+    Settings.Aimbot_FOV = f
+    Settings.Aimbot_DeadZone = d
+    Settings.Aimbot_Prediction = p
+    Settings.Aimbot_ResponseCurve = rc
+    Settings.Aimbot_MaxSpeed = mx
+    Settings.Aimbot_MinSpeed = mn
+    Settings.Aimbot_NearSlowdown = ns
+    pcall(function()
+        SmoothSlider:Set(s)
+        FOVSlider:Set(f)
+        DeadSlider:Set(d)
+        PredSlider:Set(p)
+        CurveSlider:Set(rc)
+        MaxSpeedSlider:Set(mx)
+        MinSpeedSlider:Set(mn)
+        NearSlider:Set(ns)
+        if RuntimeState.FOVCircle then
+            RuntimeState.FOVCircle.Radius = f
+        end
+    end)
+    Rayfield:Notify({ Title = "Preset", Content = name .. " applied", Duration = 2 })
+end
+
 AimTab:CreateButton({
     Name = "🎯 Ideal",
     Callback = function()
-        Settings.Aimbot_Smoothing = 4
-        Settings.Aimbot_FOV = 120
-        Settings.Aimbot_DeadZone = 1
-        Settings.Aimbot_Prediction = 0.08
-        Settings.Aimbot_ResponseCurve = 1.2
-        Settings.Aimbot_MaxSpeed = 40
-        Settings.Aimbot_MinSpeed = 0.5
-        Settings.Aimbot_NearSlowdown = 15
-        pcall(function() if Settings.FOVCircle then Settings.FOVCircle.Radius = 120 end end)
-        Rayfield:Notify({ Title = "Preset", Content = "Ideal settings applied", Duration = 2 })
+        applyPreset("Ideal", 4, 120, 1, 8, 1.2, 40, 0.5, 15)
     end
 })
 
 AimTab:CreateButton({
     Name = "⚡ Aggressive",
     Callback = function()
-        Settings.Aimbot_Smoothing = 2
-        Settings.Aimbot_FOV = 150
-        Settings.Aimbot_DeadZone = 0.5
-        Settings.Aimbot_Prediction = 0.05
-        Settings.Aimbot_ResponseCurve = 0.7
-        Settings.Aimbot_MaxSpeed = 70
-        Settings.Aimbot_MinSpeed = 1
-        Settings.Aimbot_NearSlowdown = 8
-        pcall(function() if Settings.FOVCircle then Settings.FOVCircle.Radius = 150 end end)
-        Rayfield:Notify({ Title = "Preset", Content = "Aggressive settings applied", Duration = 2 })
+        applyPreset("Aggressive", 2, 150, 0.5, 5, 0.7, 70, 1, 8)
     end
 })
 
 AimTab:CreateButton({
     Name = "🫥 Legit",
     Callback = function()
-        Settings.Aimbot_Smoothing = 8
-        Settings.Aimbot_FOV = 80
-        Settings.Aimbot_DeadZone = 2
-        Settings.Aimbot_Prediction = 0.1
-        Settings.Aimbot_ResponseCurve = 1.8
-        Settings.Aimbot_MaxSpeed = 25
-        Settings.Aimbot_MinSpeed = 0.3
-        Settings.Aimbot_NearSlowdown = 30
-        pcall(function() if Settings.FOVCircle then Settings.FOVCircle.Radius = 80 end end)
-        Rayfield:Notify({ Title = "Preset", Content = "Legit settings applied", Duration = 2 })
+        applyPreset("Legit", 8, 80, 2, 10, 1.8, 25, 0.3, 30)
     end
 })
 
 AimTab:CreateButton({
     Name = "🔒 Lock-On",
     Callback = function()
-        Settings.Aimbot_Smoothing = 1
-        Settings.Aimbot_FOV = 200
-        Settings.Aimbot_DeadZone = 0.5
-        Settings.Aimbot_Prediction = 0.12
-        Settings.Aimbot_ResponseCurve = 0.5
-        Settings.Aimbot_MaxSpeed = 100
-        Settings.Aimbot_MinSpeed = 2
-        Settings.Aimbot_NearSlowdown = 5
-        pcall(function() if Settings.FOVCircle then Settings.FOVCircle.Radius = 200 end end)
-        Rayfield:Notify({ Title = "Preset", Content = "Lock-On settings applied", Duration = 2 })
+        applyPreset("Lock-On", 1, 200, 0.5, 12, 0.5, 100, 2, 5)
     end
 })
 
--- ═══ VISUALS ═══
+-- ═══════════════════════════════
+-- VISUALS TAB
+-- ═══════════════════════════════
 local VisTab = Window:CreateTab("Visuals", 4483362458)
 VisTab:CreateSection("Lighting")
 
-VisTab:CreateToggle({
+local FBToggle = VisTab:CreateToggle({
     Name = "Fullbright",
     CurrentValue = false,
+    Flag = "fbToggle",
     Callback = function(v)
         Settings.Fullbright_Enabled = v
         applyFullbright()
     end
 })
 
--- ============================================
--- НИКАКИХ HOOKS
--- ============================================
+-- ═══════════════════════════════
+-- CONFIG TAB
+-- ═══════════════════════════════
+local CfgTab = Window:CreateTab("Configs", 4483362458)
+CfgTab:CreateSection("💾 Save / Load")
+
+local configNameInput = ""
+
+CfgTab:CreateInput({
+    Name = "Config Name",
+    PlaceholderText = "my_config",
+    RemoveTextAfterFocusLost = false,
+    Flag = "cfgName",
+    Callback = function(t)
+        configNameInput = t
+    end
+})
+
+local ConfigDropdown = CfgTab:CreateDropdown({
+    Name = "Select Config",
+    Options = getConfigList(),
+    CurrentOption = {},
+    Flag = "cfgSelect",
+    Callback = function(o)
+        if o[1] then
+            CurrentConfigName = o[1]
+        end
+    end
+})
+
+CfgTab:CreateSection("Actions")
+
+CfgTab:CreateButton({
+    Name = "💾 Save Config",
+    Callback = function()
+        local name = configNameInput
+        if name == "" then name = CurrentConfigName end
+        if name == "" then name = "default" end
+        saveConfig(name)
+        CurrentConfigName = name
+
+        -- Обновить список
+        pcall(function()
+            ConfigDropdown:Set(getConfigList())
+        end)
+
+        Rayfield:Notify({
+            Title = "Config",
+            Content = "Saved: " .. name,
+            Duration = 3
+        })
+    end
+})
+
+CfgTab:CreateButton({
+    Name = "📂 Load Config",
+    Callback = function()
+        local name = CurrentConfigName
+        if name == "" then
+            Rayfield:Notify({ Title = "Config", Content = "Select a config first!", Duration = 2 })
+            return
+        end
+
+        local ok = loadConfig(name)
+        if not ok then
+            Rayfield:Notify({ Title = "Config", Content = "Failed to load: " .. name, Duration = 2 })
+            return
+        end
+
+        -- Обновляем все GUI элементы
+        pcall(function()
+            ESPToggle:Set(Settings.ESP_Enabled)
+            ESPSlider:Set(Settings.ESP_Transparency)
+
+            AimToggle:Set(Settings.Aimbot_Enabled)
+            StickyToggle:Set(Settings.Aimbot_StickyTarget)
+            SmoothSlider:Set(Settings.Aimbot_Smoothing)
+            FOVSlider:Set(Settings.Aimbot_FOV)
+            DeadSlider:Set(Settings.Aimbot_DeadZone)
+            PredSlider:Set(Settings.Aimbot_Prediction)
+            CurveSlider:Set(Settings.Aimbot_ResponseCurve)
+            MaxSpeedSlider:Set(Settings.Aimbot_MaxSpeed)
+            MinSpeedSlider:Set(Settings.Aimbot_MinSpeed)
+            NearSlider:Set(Settings.Aimbot_NearSlowdown)
+
+            FBToggle:Set(Settings.Fullbright_Enabled)
+
+            if RuntimeState.FOVCircle then
+                RuntimeState.FOVCircle.Radius = Settings.Aimbot_FOV
+                RuntimeState.FOVCircle.Visible = Settings.Aimbot_Enabled
+            end
+        end)
+
+        -- Применяем
+        ESP_Color = Color3.fromRGB(Settings.ESP_Color_R, Settings.ESP_Color_G, Settings.ESP_Color_B)
+        updateESP()
+        applyFullbright()
+
+        Rayfield:Notify({
+            Title = "Config",
+            Content = "Loaded: " .. name,
+            Duration = 3
+        })
+    end
+})
+
+CfgTab:CreateButton({
+    Name = "🗑️ Delete Config",
+    Callback = function()
+        local name = CurrentConfigName
+        if name == "" then
+            Rayfield:Notify({ Title = "Config", Content = "Select a config first!", Duration = 2 })
+            return
+        end
+
+        deleteConfig(name)
+        CurrentConfigName = ""
+
+        pcall(function()
+            ConfigDropdown:Set(getConfigList())
+        end)
+
+        Rayfield:Notify({
+            Title = "Config",
+            Content = "Deleted: " .. name,
+            Duration = 3
+        })
+    end
+})
+
+CfgTab:CreateButton({
+    Name = "🔄 Refresh List",
+    Callback = function()
+        pcall(function()
+            ConfigDropdown:Set(getConfigList())
+        end)
+        Rayfield:Notify({ Title = "Config", Content = "List refreshed", Duration = 2 })
+    end
+})
+
+CfgTab:CreateSection("Auto")
+
+CfgTab:CreateToggle({
+    Name = "Auto-Load 'default' on Start",
+    CurrentValue = false,
+    Flag = "cfgAutoLoad",
+    Callback = function(v)
+        if v then
+            local ok = loadConfig("default")
+            if ok then
+                pcall(function()
+                    ESPToggle:Set(Settings.ESP_Enabled)
+                    ESPSlider:Set(Settings.ESP_Transparency)
+                    AimToggle:Set(Settings.Aimbot_Enabled)
+                    StickyToggle:Set(Settings.Aimbot_StickyTarget)
+                    SmoothSlider:Set(Settings.Aimbot_Smoothing)
+                    FOVSlider:Set(Settings.Aimbot_FOV)
+                    DeadSlider:Set(Settings.Aimbot_DeadZone)
+                    PredSlider:Set(Settings.Aimbot_Prediction)
+                    CurveSlider:Set(Settings.Aimbot_ResponseCurve)
+                    MaxSpeedSlider:Set(Settings.Aimbot_MaxSpeed)
+                    MinSpeedSlider:Set(Settings.Aimbot_MinSpeed)
+                    NearSlider:Set(Settings.Aimbot_NearSlowdown)
+                    FBToggle:Set(Settings.Fullbright_Enabled)
+                end)
+                ESP_Color = Color3.fromRGB(Settings.ESP_Color_R, Settings.ESP_Color_G, Settings.ESP_Color_B)
+                updateESP()
+                applyFullbright()
+                Rayfield:Notify({ Title = "Config", Content = "Auto-loaded 'default'", Duration = 2 })
+            end
+        end
+    end
+})
+
+CfgTab:CreateLabel("Configs saved to: MortisHack/")
 
 -- ============================================
--- MAIN LOOP (МИНИМАЛЬНЫЙ)
+-- MAIN LOOP
 -- ============================================
 local lastMyModelUpdate = 0
 
@@ -723,25 +990,25 @@ RunService.RenderStepped:Connect(function()
     end
 
     pcall(function()
-        if Settings.FOVCircle then
+        if RuntimeState.FOVCircle then
             local s = Camera.ViewportSize
-            Settings.FOVCircle.Position = Vector2.new(s.X / 2, s.Y / 2)
-            Settings.FOVCircle.Visible = Settings.Aimbot_Enabled
+            RuntimeState.FOVCircle.Position = Vector2.new(s.X / 2, s.Y / 2)
+            RuntimeState.FOVCircle.Visible = Settings.Aimbot_Enabled
         end
     end)
 
-    Settings.AimbotActive = Settings.Aimbot_Enabled and isAimKeyPressed()
+    RuntimeState.AimbotActive = Settings.Aimbot_Enabled and isAimKeyPressed()
 
-    if Settings.AimbotActive then
+    if RuntimeState.AimbotActive then
         local part = getBestTarget()
         if part then
             aimAt(part)
-            Settings.CurrentTarget = part
+            RuntimeState.CurrentTarget = part
         else
-            Settings.CurrentTarget = nil
+            RuntimeState.CurrentTarget = nil
         end
     else
-        Settings.CurrentTarget = nil
+        RuntimeState.CurrentTarget = nil
         stickyTargetModel = nil
     end
 end)
@@ -752,7 +1019,7 @@ end)
 task.defer(function()
     local chars = Workspace:WaitForChild("Characters", 30)
     if not chars then
-        warn("[Mortis] No Characters folder!")
+        warn("[Mortis] No Characters!")
         return
     end
 
@@ -765,7 +1032,7 @@ task.defer(function()
     end)
 
     chars.ChildRemoved:Connect(function(m)
-        Settings.WatchedModels[m] = nil
+        RuntimeState.WatchedModels[m] = nil
         teamCache[m] = nil
         teamCacheTick[m] = nil
         aliveCache[m] = nil
@@ -773,16 +1040,17 @@ task.defer(function()
         if m == stickyTargetModel then stickyTargetModel = nil end
     end)
 
+    ensureFolder()
     createFOVCircle()
     findMyModel()
     local count = updateESP()
 
     Rayfield:Notify({
-        Title = "Mortis v10.2",
-        Content = count .. " players | ESP + Aimbot + Fullbright\nNo hooks = weapon works!",
+        Title = "Mortis v11.1",
+        Content = count .. " players | Configs ready\nFolder: MortisHack/",
         Duration = 7
     })
 
-    print("[Mortis v10.2] " .. count .. " players | MyModel: " .. (MyModel and MyModel.Name or "nil"))
+    print("[Mortis v11.1] " .. count .. " players")
 end)
 
