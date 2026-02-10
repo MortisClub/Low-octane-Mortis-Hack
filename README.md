@@ -106,3 +106,16 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/<USER>/<REPO>/main/ma
 loadstring(game:HttpGet("https://raw.githubusercontent.com/MortisClub/Low-octane-Mortis-/main/main.lua"))()
 ```
 
+---
+
+## Changelog
+
+- **v10.2 — Xeno Fix**
+  - **Удалено**: Magic Bullet и любые хуки через `hookmetamethod`  
+    - **Причина**: в новом Xeno хук `__namecall` ломал систему оружия/прицеливания (аргументы ремоутов портились, оружие задирало вверх, аим не работал корректно).  
+  - **Удалено**: старый Fluent‑интерфейс (`ui.lua`) и модульная структура (`core.lua`, `lighting.lua`, `movement.lua`, `esp.lua`, `aim.lua`) из пути загрузки.  
+    - **Причина**: упростить запуск до одной точки входа и убрать лишние зависимости; весь актуальный функционал перенесён в монолитный `runtime.lua`.  
+  - **Добавлено**: новый Rayfield‑GUI с вкладками **ESP / Aimbot / Visuals**.  
+  - **Упрощено**: логика — только ESP, Aimbot и Fullbright, без Movement/GodMode/прочих фич, чтобы ничего не конфликтовало с античитом и Xeno.  
+  - **Поведение**: чит не трогает сетевые вызовы игры (нет `hookmetamethod`), поэтому оружие и прицел работают как в оригинале, а Aimbot управляет только твоей мышью.
+
